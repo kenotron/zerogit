@@ -111,11 +111,11 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Mono.Zeroconf-master\Mono.Zeroconf-master\src\Mono.Zeroconf.Providers.Bonjour\Mono.Zeroconf.Providers.Bonjour.csproj">
+    <ProjectReference Include="..\Mono.Zeroconf.Providers.Bonjour\Mono.Zeroconf.Providers.Bonjour.csproj">
       <Project>{623325e2-5821-4701-a40c-3759097008dd}</Project>
       <Name>Mono.Zeroconf.Providers.Bonjour</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Mono.Zeroconf-master\Mono.Zeroconf-master\src\Mono.Zeroconf\Mono.Zeroconf.csproj">
+    <ProjectReference Include="..\Mono.Zeroconf\Mono.Zeroconf.csproj">
       <Project>{5cf88e3a-13dd-4114-bad9-da826946516f}</Project>
       <Name>Mono.Zeroconf</Name>
     </ProjectReference>

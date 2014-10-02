@@ -139,7 +139,7 @@ namespace ZeroGit.ViewModels
             {
                 Description = args.Service.TxtRecord["description"].ValueString,
                 Name = args.Service.Name,
-                Port = args.Service.Port,
+                Port = args.Service.UPort,
                 Host = args.Service.HostEntry.HostName
             };
 

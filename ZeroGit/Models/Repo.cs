@@ -25,7 +25,7 @@ namespace ZeroGit.Models
             }
         }
 
-        public short Port { get; set; }
+        public ushort Port { get; set; }
 
         public string Name
         {
