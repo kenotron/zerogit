@@ -3,11 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ZeroGit.Services;
 
-namespace ZeroGit.Models
+namespace ZeroGit.ViewModels
+
 {
-    public class Repo : PropertyChangedBase
+    public class RepoViewModel : PropertyChangedBase
     {
+        private GitService gitService;
+
         private string host;
         private string name;
 
@@ -42,5 +46,15 @@ namespace ZeroGit.Models
         }
         
         public string Description { get; set; }
+
+        public RepoViewModel(GitService gitService)
+        {
+            this.gitService = gitService;
+        }
+
+        public void Clone()
+        {
+            this.gitService.Clone(this.Host, this.Port, this.Name);
+        }
     }
 }

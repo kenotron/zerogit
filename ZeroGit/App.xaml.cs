@@ -13,5 +13,6 @@ namespace ZeroGit
     /// </summary>
     public partial class App : Application
     {
+
     }
 }

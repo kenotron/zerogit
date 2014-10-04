@@ -10,29 +10,41 @@ using System.Diagnostics;
 using System.Windows;
 using System.IO;
 using Mono.Zeroconf;
-using ZeroGit.Models;
+using ZeroGit.Services;
+using System.Net;
 
 namespace ZeroGit.ViewModels
 {
     class MainWindowViewModel : Screen
     {
         private Process process;
+        
         private ushort port = 9419;
         private RegisterService service;
 
-        private BindableCollection<Repo> repos;
+        private GitService gitService;
+        private BroadcastService broadcastService;
+
+        private bool isReadyToDrop = false;
+
+        public bool IsReadyToDrop
+        {
+            get { return this.isReadyToDrop; }
+            set { this.isReadyToDrop = value; this.NotifyOfPropertyChange(() => this.IsReadyToDrop); }
+        }
+        
+        private BindableCollection<RepoViewModel> repos;
  
-        public BindableCollection<Repo> Repos
+        public BindableCollection<RepoViewModel> Repos
         { 
             get
             {
                 return this.repos;
             }
             
-            set
+            private set
             {
                 this.repos = value;
-                this.NotifyOfPropertyChange(() => this.Repos);
             }
         }
 
@@ -83,30 +95,55 @@ namespace ZeroGit.ViewModels
             }
         }
 
+        public MainWindowViewModel(GitService gitService, BroadcastService broadcastService)
+        {
+            this.gitService = gitService;
+            this.broadcastService = broadcastService;
+
+            this.Repos = new BindableCollection<RepoViewModel>();
+
+            this.DisplayName = "ZeroGit";
+            this.StatusText = "Drop Project Folder Here to Share Repository";
+        }
+
         protected override void OnActivate()
         {
             base.OnActivate();
-            this.Repos = new BindableCollection<Repo>();
 
-            var browser = new ServiceBrowser();
-
-            this.StatusText = "Drop Project Folder Here to Share Repository";
-
-            browser.ServiceAdded += browser_ServiceAdded;
-            browser.ServiceRemoved += browser_ServiceRemoved;
-            browser.Browse("_git._tcp", "local");
-            
-            this.DisplayName = "ZeroGit";
+            this.broadcastService.ServiceAdded += broadcastService_ServiceAdded;
+            this.broadcastService.ServiceRemoved += broadcastService_ServiceRemoved;
+            this.broadcastService.Browse();
         }
 
-        void browser_ServiceRemoved(object o, ServiceBrowseEventArgs args)
+        void broadcastService_ServiceRemoved(object sender, ServiceResolvedEventArgs e)
         {
-            var repos = from r in this.Repos where r.Name == args.Service.Name && r.Host == args.Service.HostEntry.HostName select r;
+            var repos = from r in this.Repos where r.Name == e.Service.Name && r.Host == e.Service.HostEntry.HostName select r;
 
             if (repos.Any())
             {
                 this.Repos.Remove(repos.First());
             }
+        }
+
+        void broadcastService_ServiceAdded(object sender, ServiceResolvedEventArgs e)
+        {
+            if (this.isPublished)
+            {
+                return;
+            }
+
+            var repo = IoC.Get<RepoViewModel>();
+
+            repo.Name = e.Service.Name;
+            repo.Port = (ushort)IPAddress.NetworkToHostOrder((short)e.Service.UPort);
+            repo.Host = e.Service.HostEntry.HostName;
+
+            if (!this.Repos.Where(r => r.Name == repo.Name).Any())
+            {
+                this.Repos.Add(repo);
+            }
+
+            this.FlyoutOpened = true;
         }
 
         protected override void OnDeactivate(bool close)
@@ -119,37 +156,6 @@ namespace ZeroGit.ViewModels
             }
         }
 
-        void browser_ServiceAdded(object o, ServiceBrowseEventArgs args)
-        {
-            if (args.Service.RegType == "_git._tcp." && !this.isPublished)
-            {
-                args.Service.Resolved += Service_Resolved;
-                args.Service.Resolve();
-            }
-        }
-
-        void Service_Resolved(object o, ServiceResolvedEventArgs args)
-        {
-            if (this.isPublished)
-            {
-                return;
-            }
-
-            var repo = new Repo
-            {
-                Description = args.Service.TxtRecord["description"].ValueString,
-                Name = args.Service.Name,
-                Port = args.Service.UPort,
-                Host = args.Service.HostEntry.HostName
-            };
-
-            if (!this.Repos.Where(r => r.Name == repo.Name).Any())
-            {
-                this.Repos.Add(repo);
-            }
-
-            this.FlyoutOpened = true;
-        }
 
         public void DropFile(DragEventArgs e)
         {
@@ -164,6 +170,16 @@ namespace ZeroGit.ViewModels
                     this.StartGitDaemon(path);
                 }
             }
+        }
+
+        public void DragOver(DragEventArgs e)
+        {
+            this.IsReadyToDrop = true;
+        }
+
+        public void DragLeave(DragEventArgs e)
+        {
+            this.IsReadyToDrop = true;
         }
 
         public void StopPublishing()
@@ -182,30 +198,13 @@ namespace ZeroGit.ViewModels
         {
             if (!string.IsNullOrEmpty(path))
             {
-                var descriptionFile = path + @"\.git\description";
-                
-                if (File.Exists(descriptionFile)) 
-                {
-                    var args = string.Format(@"daemon --verbose --export-all --port={0} --base-path=""{1}"" --base-path-relaxed", this.port, path);
-
-                    var psi = new ProcessStartInfo("git", args)
-                    {
-                        CreateNoWindow = true,
-                        WindowStyle = ProcessWindowStyle.Hidden,
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true
-                    };
-
-                    this.process = Process.Start(psi);
-
-                    this.PublishService(Path.GetFileName(path) , this.port, File.ReadAllText(descriptionFile));
-                    
-                    this.StatusText = "Publishing";
-                }                
+                this.process = this.gitService.StartGitDaemon(port, path);
+                this.PublishService(Path.GetFileName(path), this.port);
+                this.StatusText = "Publishing";
             }
         }
 
-        private void PublishService(string name, ushort port, string description)
+        private void PublishService(string name, ushort port)
         {
             this.service = new RegisterService();
             this.service.Name = name;
@@ -214,11 +213,11 @@ namespace ZeroGit.ViewModels
             this.service.UPort = port;
             
 
-            // TxtRecords are optional
+            /*// TxtRecords are optional
             var txtRecord = new TxtRecord();
             txtRecord.Add("description", description);
 
-            this.service.TxtRecord = txtRecord;
+            this.service.TxtRecord = txtRecord;*/
 
             this.service.Response += service_Response;
 

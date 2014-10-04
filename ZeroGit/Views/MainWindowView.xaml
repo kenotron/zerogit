@@ -16,8 +16,11 @@
         <b:BorderlessWindowBehavior AllowsTransparency="False" EnableDWMDropShadow="True" />
     </i:Interaction.Behaviors>
 
-    <Grid AllowDrop="True" cal:Message.Attach="[Event Drop] = [Action DropFile($eventArgs)]">
-        <StackPanel Margin="10,0,10,0" VerticalAlignment="Center">
+    <Grid AllowDrop="True" cal:Message.Attach="[Event Drop] = [Action DropFile($eventArgs)]; [Event DragOver] = [Action DragOver($eventArgs)]; [Event MouseOut] = [Action DragLeave($eventArgs)]">
+        <StackPanel Margin="10,0,10,0"
+                    VerticalAlignment="Center"
+                    Visibility="{Binding IsReadyToDrop,
+                                         Converter={StaticResource BooleanToVisibilityConverter}}">
             <Button x:Name="StopPublishing"
                     VerticalAlignment="Center"
                     BorderThickness="0"
@@ -35,14 +38,39 @@
                        FontSize="46"
                        Text=""
                        TextAlignment="Center"
-                       Visibility="{Binding IsPublished,
-                                            Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                       Visibility="{Binding IsReadyToDrop,
+                                            Converter={StaticResource BooleanToVisibilityConverter}}" />
             <TextBlock x:Name="StatusText"
                        FontFamily="Segoe UI Light"
                        FontSize="18"
                        TextAlignment="Center"
                        TextWrapping="Wrap" />
         </StackPanel>
+        <ListBox x:Name="Repos"
+                 ItemsSource="{Binding Repos}"
+                 Visibility="{Binding IsReadyToDrop,
+                                      Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <TextBlock x:Name="R" Text="R: " />
+                            <TextBlock x:Name="Name" Text="{Binding Name}" />
+                            <TextBlock x:Name="Host" Text="{Binding Host}" />
+                        </StackPanel>
+                        <Button x:Name="Clone"
+                                Grid.Column="1"
+                                Content="Clone"
+                                cal:Message.Attach="[Event Click] = [Action Clone()]" />
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
     </Grid>
 
     <controls:MetroWindow.Flyouts>
@@ -51,27 +79,7 @@
                              Width="300"
                              IsOpen="{Binding FlyoutOpened}"
                              Position="Right">
-                <Grid Margin="0" Background="Red">
-                    <ListBox x:Name="Repos" ItemsSource="{Binding Repos}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                        <TextBlock x:Name="Name" Text="{Binding Name}" />
-                                        <TextBlock x:Name="Host" Text="{Binding Host}" />
-                                    </StackPanel>
-                                    <Button x:Name="Clone"
-                                            Grid.Column="2"
-                                            Content="Clone" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </Grid>
+                <Grid Margin="0" Background="Red" />
             </controls:Flyout>
         </controls:FlyoutsControl>
     </controls:MetroWindow.Flyouts>
