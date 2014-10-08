@@ -11,9 +11,12 @@
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Colors.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Accents/Steel.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Accents/BaseDark.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.AnimatedTabControl.xaml" />
                 <ResourceDictionary>
                     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
                     <cvt:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+                    <cvt:AnyToVisibilityConverter x:Key="AnyToVisibilityConverter" Inverse="false" />
+                    <cvt:AnyToVisibilityConverter x:Key="EmptyToVisibilityConverter" Inverse="true" />
                     <local:AppBootstrapper x:Key="bootstrapper" />
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>

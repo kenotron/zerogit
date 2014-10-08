@@ -47,6 +47,10 @@ namespace ZeroGit.ViewModels
         
         public string Description { get; set; }
 
+        public RepoViewModel()
+        {
+        }
+
         public RepoViewModel(GitService gitService)
         {
             this.gitService = gitService;

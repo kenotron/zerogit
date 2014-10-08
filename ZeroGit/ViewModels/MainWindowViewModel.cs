@@ -25,14 +25,14 @@ namespace ZeroGit.ViewModels
         private GitService gitService;
         private BroadcastService broadcastService;
 
-        private bool isReadyToDrop = false;
+        private string currentTab;
 
-        public bool IsReadyToDrop
+        public string CurrentTab
         {
-            get { return this.isReadyToDrop; }
-            set { this.isReadyToDrop = value; this.NotifyOfPropertyChange(() => this.IsReadyToDrop); }
+            get { return this.currentTab; }
+            set { this.currentTab = value; this.NotifyOfPropertyChange(() => this.CurrentTab); }
         }
-        
+
         private BindableCollection<RepoViewModel> repos;
  
         public BindableCollection<RepoViewModel> Repos
@@ -42,7 +42,7 @@ namespace ZeroGit.ViewModels
                 return this.repos;
             }
             
-            private set
+            set
             {
                 this.repos = value;
             }
@@ -95,12 +95,19 @@ namespace ZeroGit.ViewModels
             }
         }
 
+        public MainWindowViewModel()
+        {
+
+        }
+
         public MainWindowViewModel(GitService gitService, BroadcastService broadcastService)
         {
             this.gitService = gitService;
             this.broadcastService = broadcastService;
 
             this.Repos = new BindableCollection<RepoViewModel>();
+
+            this.CurrentTab = "Browse";
 
             this.DisplayName = "ZeroGit";
             this.StatusText = "Drop Project Folder Here to Share Repository";
@@ -112,6 +119,7 @@ namespace ZeroGit.ViewModels
 
             this.broadcastService.ServiceAdded += broadcastService_ServiceAdded;
             this.broadcastService.ServiceRemoved += broadcastService_ServiceRemoved;
+
             this.broadcastService.Browse();
         }
 
@@ -142,8 +150,6 @@ namespace ZeroGit.ViewModels
             {
                 this.Repos.Add(repo);
             }
-
-            this.FlyoutOpened = true;
         }
 
         protected override void OnDeactivate(bool close)
@@ -172,14 +178,9 @@ namespace ZeroGit.ViewModels
             }
         }
 
-        public void DragOver(DragEventArgs e)
+        public void DragEnter(DragEventArgs e)
         {
-            this.IsReadyToDrop = true;
-        }
-
-        public void DragLeave(DragEventArgs e)
-        {
-            this.IsReadyToDrop = true;
+            this.CurrentTab = "Share";
         }
 
         public void StopPublishing()
@@ -190,7 +191,7 @@ namespace ZeroGit.ViewModels
                 this.process.Kill();
             }
 
-            this.StatusText = "Drop Project Folder Here to git daemon Effortlessly";
+            this.StatusText = "Drop Project Folder Here to Share Repository";
             this.IsPublished = false;
         }
 
@@ -210,17 +211,8 @@ namespace ZeroGit.ViewModels
             this.service.Name = name;
             this.service.RegType = "_git._tcp";
             this.service.ReplyDomain = "local.";
-            this.service.UPort = port;
-            
-
-            /*// TxtRecords are optional
-            var txtRecord = new TxtRecord();
-            txtRecord.Add("description", description);
-
-            this.service.TxtRecord = txtRecord;*/
-
+            this.service.UPort = port;           
             this.service.Response += service_Response;
-
             this.service.Register();
         }
 

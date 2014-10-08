@@ -4,83 +4,124 @@
                       xmlns:b="clr-namespace:MahApps.Metro.Behaviours;assembly=MahApps.Metro"
                       xmlns:cal="http://www.caliburnproject.org"
                       xmlns:controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+                      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                      xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions"
                       xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+                      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                      xmlns:zb="clr-namespace:ZeroGit.Behaviors"
                       Title="Main Window"
                       Width="300"
                       Height="360"
                       BorderBrush="{DynamicResource AccentColorBrush}"
                       BorderThickness="1"
                       GlowBrush="{DynamicResource AccentColorBrush}"
-                      ResizeMode="NoResize">
+                      ResizeMode="NoResize"
+                      d:DataContext="{d:DesignData /SampleData/MainWindowViewModelSampleData.xaml}"
+                      mc:Ignorable="d">
     <i:Interaction.Behaviors>
         <b:BorderlessWindowBehavior AllowsTransparency="False" EnableDWMDropShadow="True" />
     </i:Interaction.Behaviors>
 
-    <Grid AllowDrop="True" cal:Message.Attach="[Event Drop] = [Action DropFile($eventArgs)]; [Event DragOver] = [Action DragOver($eventArgs)]; [Event MouseOut] = [Action DragLeave($eventArgs)]">
-        <StackPanel Margin="10,0,10,0"
-                    VerticalAlignment="Center"
-                    Visibility="{Binding IsReadyToDrop,
-                                         Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Button x:Name="StopPublishing"
-                    VerticalAlignment="Center"
-                    BorderThickness="0"
-                    Visibility="{Binding IsPublished,
-                                         Converter={StaticResource BooleanToVisibilityConverter}}">
-                <TextBlock FontFamily="Segoe UI Symbol"
-                           FontSize="46"
-                           Text=""
-                           TextAlignment="Center" />
-            </Button>
+    <Grid x:Name="grid"
+          AllowDrop="True"
+          Background="Black"
+          cal:Message.Attach="[Event Drop] = [Action DropFile($eventArgs)]; [Event DragEnter] = [Action DragEnter($eventArgs)]"
+          zb:StateManager.VisualStateProperty="{Binding State}">
+        <controls:MetroAnimatedTabControl SelectedValue="{Binding CurrentTab}" SelectedValuePath="Name">
+            <TabItem Name="Browse" Header="Browse">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <ListBox x:Name="Repos"
+                             Grid.Row="0"
+                             ItemsSource="{Binding Repos}"
+                             Visibility="{Binding Repos,
+                                                  Converter={StaticResource AnyToVisibilityConverter}}"
+                             d:IsHidden="True">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,10,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0"
+                                                Margin="5"
+                                                Orientation="Vertical">
+                                        <TextBlock x:Name="Name" Text="{Binding Name}" />
+                                        <TextBlock x:Name="Host" Text="{Binding Host}" />
+                                    </StackPanel>
+                                    <Button x:Name="Clone"
+                                            Grid.Column="1"
+                                            Width="48"
+                                            Height="24"
+                                            VerticalAlignment="Center"
+                                            Content="Clone"
+                                            ForceCursor="True"
+                                            Style="{DynamicResource MetroButtonStyle}"
+                                            cal:Message.Attach="[Event Click] = [Action Clone()]" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <StackPanel Grid.Row="0" VerticalAlignment="Center">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=Repos.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
 
-            <TextBlock x:Name="Download"
-                       VerticalAlignment="Center"
-                       FontFamily="Segoe UI Symbol"
-                       FontSize="46"
-                       Text=""
-                       TextAlignment="Center"
-                       Visibility="{Binding IsReadyToDrop,
-                                            Converter={StaticResource BooleanToVisibilityConverter}}" />
-            <TextBlock x:Name="StatusText"
-                       FontFamily="Segoe UI Light"
-                       FontSize="18"
-                       TextAlignment="Center"
-                       TextWrapping="Wrap" />
-        </StackPanel>
-        <ListBox x:Name="Repos"
-                 ItemsSource="{Binding Repos}"
-                 Visibility="{Binding IsReadyToDrop,
-                                      Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Orientation="Horizontal">
-                            <TextBlock x:Name="R" Text="R: " />
-                            <TextBlock x:Name="Name" Text="{Binding Name}" />
-                            <TextBlock x:Name="Host" Text="{Binding Host}" />
-                        </StackPanel>
-                        <Button x:Name="Clone"
-                                Grid.Column="1"
-                                Content="Clone"
-                                cal:Message.Attach="[Event Click] = [Action Clone()]" />
-                    </Grid>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+                        <controls:ProgressRing x:Name="ProgressRing"
+                                               VerticalAlignment="Center"
+                                               IsActive="True" />
+                        <TextBlock x:Name="StatusTextBrowsing"
+                                   VerticalAlignment="Center"
+                                   Text="Browsing for git Repositories"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Grid>
+            </TabItem>
 
+            <TabItem Name="Share" Header="Share">
+                <StackPanel x:Name="stackPanel"
+                            Margin="10,0,10,0"
+                            VerticalAlignment="Center">
+                    <Button x:Name="StopPublishing"
+                            Width="64"
+                            Height="64"
+                            VerticalAlignment="Center"
+                            BorderThickness="0"
+                            Style="{DynamicResource MetroCircleButtonStyle}"
+                            Visibility="{Binding IsPublished,
+                                                 Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock FontFamily="Segoe UI Symbol"
+                                   FontSize="46"
+                                   Text=""
+                                   TextAlignment="Center" />
+                    </Button>
+
+                    <TextBlock x:Name="Download"
+                               VerticalAlignment="Center"
+                               FontFamily="Segoe UI Symbol"
+                               FontSize="46"
+                               Text=""
+                               TextAlignment="Center"
+                               Visibility="{Binding IsPublished,
+                                                    Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                    <TextBlock x:Name="StatusText"
+                               FontFamily="Segoe UI Light"
+                               FontSize="18"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </TabItem>
+        </controls:MetroAnimatedTabControl>
     </Grid>
-
-    <controls:MetroWindow.Flyouts>
-        <controls:FlyoutsControl>
-            <controls:Flyout x:Name="BrowseFlyout"
-                             Width="300"
-                             IsOpen="{Binding FlyoutOpened}"
-                             Position="Right">
-                <Grid Margin="0" Background="Red" />
-            </controls:Flyout>
-        </controls:FlyoutsControl>
-    </controls:MetroWindow.Flyouts>
 </controls:MetroWindow>
