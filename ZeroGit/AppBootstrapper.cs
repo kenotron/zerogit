@@ -25,6 +25,7 @@ namespace ZeroGit
             this.container = new SimpleContainer();
             this.container.Singleton<IWindowManager, WindowManager>();
             this.container.Singleton<IEventAggregator, EventAggregator>();
+            this.container.Singleton<IFolderDialogService, FolderDialogService>();
 
             this.container.Singleton<GitService>();
             this.container.Singleton<BroadcastService>();

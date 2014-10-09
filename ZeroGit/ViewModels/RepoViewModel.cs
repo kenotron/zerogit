@@ -11,6 +11,7 @@ namespace ZeroGit.ViewModels
     public class RepoViewModel : PropertyChangedBase
     {
         private GitService gitService;
+        private IFolderDialogService folderDialogService;
 
         private string host;
         private string name;
@@ -51,14 +52,16 @@ namespace ZeroGit.ViewModels
         {
         }
 
-        public RepoViewModel(GitService gitService)
+        public RepoViewModel(GitService gitService, IFolderDialogService folderDialogService)
         {
             this.gitService = gitService;
+            this.folderDialogService = folderDialogService;
         }
 
         public void Clone()
         {
-            this.gitService.Clone(this.Host, this.Port, this.Name);
+            var path = this.folderDialogService.GetFolder();
+            this.gitService.Clone(this.Host, this.Port, path);
         }
     }
 }

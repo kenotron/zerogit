@@ -25,5 +25,7 @@ namespace ZeroGit.Views
         {
             InitializeComponent();
         }
+
+
     }
 }

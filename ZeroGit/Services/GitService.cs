@@ -39,7 +39,7 @@ namespace ZeroGit.Services
         {
             if (!string.IsNullOrEmpty(host) && !string.IsNullOrEmpty(path))
             {
-                var args = string.Format(@"clone git://{0}:{1}/ {2}/", host, port, Path.Combine(@"C:\temp\", path));
+                var args = string.Format(@"clone git://{0}:{1}/ {2}/", host, port, path);
 
                 var psi = new ProcessStartInfo("git", args)
                 {
