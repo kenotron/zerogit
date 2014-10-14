@@ -1,6 +1,7 @@
 ﻿using Caliburn.Micro;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using ZeroGit.Services;
@@ -60,7 +61,7 @@ namespace ZeroGit.ViewModels
 
         public void Clone()
         {
-            var path = this.folderDialogService.GetFolder();
+            var path = Path.Combine(this.folderDialogService.GetFolder(), this.Name);
             this.gitService.Clone(this.Host, this.Port, path);
         }
     }
